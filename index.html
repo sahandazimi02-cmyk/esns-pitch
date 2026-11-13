@@ -169,6 +169,27 @@
     x0 = null;
   });
 
+  // If the browser held back autoplay (hidden tab, power saving), start the
+  // current slide's videos as soon as the page is visible or the viewer acts.
+  function resume() {
+    if (document.hidden) return;
+    slides[cur].querySelectorAll('video').forEach(function (v) {
+      v.muted = true;
+      if (v.paused) { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+    });
+  }
+  document.addEventListener('visibilitychange', resume);
+  window.addEventListener('focus', resume);
+  document.addEventListener('pointerdown', resume, true);
+  document.addEventListener('keydown', resume, true);
+  slides.forEach(function (sl) {
+    sl.querySelectorAll('video').forEach(function (v) {
+      v.muted = true;
+      v.addEventListener('canplay', function () { if (sl.classList.contains('active')) resume(); });
+    });
+  });
+  resume();
+
   var t;
   function wake() {
     document.body.classList.add('show-ui');
