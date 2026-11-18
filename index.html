@@ -38,6 +38,55 @@
   #ui button:hover, #ui button:focus-visible { background: #EB1C22; }
   #ui svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
   #count { min-width: 52px; text-align: center; letter-spacing: 1px; }
+
+  /* ---- VHS look: static scanlines + vignette, moving grain and tracking band.
+     Only transform/opacity animate, no blend modes or filters over the videos. ---- */
+  #deck p { text-shadow: -2px 0 rgba(235,28,34,.45), 2px 0 rgba(60,200,255,.32); }
+  #vhs { position: fixed; inset: 0; pointer-events: none; z-index: 5; overflow: hidden; }
+  #vhs .scan {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at center, transparent 58%, rgba(0,0,0,.38) 100%),
+      repeating-linear-gradient(to bottom, rgba(0,0,0,.14) 0 1px, transparent 1px 3px);
+  }
+  #vhs .grain {
+    position: absolute; inset: -128px; background: url(grain.png) repeat; opacity: .07;
+    animation: vhs-grain .9s steps(1) infinite; will-change: transform;
+  }
+  @keyframes vhs-grain {
+    0%   { transform: translate(0, 0); }
+    12%  { transform: translate(-37px, 21px); }
+    25%  { transform: translate(53px, -44px); }
+    37%  { transform: translate(-61px, -18px); }
+    50%  { transform: translate(28px, 59px); }
+    62%  { transform: translate(-14px, -66px); }
+    75%  { transform: translate(70px, 33px); }
+    87%  { transform: translate(-48px, 47px); }
+  }
+  #vhs .track {
+    position: absolute; left: 0; right: 0; top: -18vh; height: 16vh;
+    background: linear-gradient(to bottom, transparent, rgba(255,254,239,.035) 40%, rgba(255,254,239,.07) 50%, rgba(255,254,239,.035) 60%, transparent);
+    animation: vhs-track 11s linear infinite; will-change: transform;
+  }
+  @keyframes vhs-track { from { transform: translateY(0); } to { transform: translateY(136vh); } }
+  #vhs .osd {
+    position: absolute; top: 3.2vh; left: 2.6vw;
+    font: 600 clamp(12px, 1.5vw, 24px)/1 'Montserrat', Arial, sans-serif; letter-spacing: .14em;
+    color: #FFFEEF; text-shadow: -2px 0 rgba(235,28,34,.6), 2px 0 rgba(60,200,255,.5);
+    opacity: 0;
+  }
+  #vhs .osd.on { animation: vhs-osd 2.2s ease-out both; }
+  @keyframes vhs-osd { 0%, 70% { opacity: .9; } 100% { opacity: 0; } }
+  #deck.glitch { animation: vhs-jolt 220ms steps(1) both; }
+  @keyframes vhs-jolt {
+    0%  { translate: 6px 0; }
+    30% { translate: -4px 1px; }
+    60% { translate: 2px 0; }
+    100% { translate: 0 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #vhs .grain, #vhs .track, #deck.glitch { animation: none; }
+  }
 </style>
 </head>
 <body class="show-ui">
@@ -100,6 +149,8 @@
 
 </div></div>
 
+<div id="vhs" aria-hidden="true"><div class="grain"></div><div class="track"></div><div class="scan"></div><div class="osd">&#9654; PLAY</div></div>
+
 <nav id="ui" aria-label="Slide controls">
   <button id="prev" aria-label="Previous slide"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
   <span id="count" aria-live="polite">1 / 5</span>
@@ -112,6 +163,7 @@
   var deck = document.getElementById('deck');
   var slides = Array.prototype.slice.call(deck.children);
   var count = document.getElementById('count');
+  var osd = document.querySelector('#vhs .osd');
   var cur = 0;
 
   function fit() {
@@ -136,6 +188,13 @@
     if (nxt) nxt.querySelectorAll('video').forEach(function (v) {
       if (v.preload !== 'auto') { v.preload = 'auto'; if (v.readyState === 0) v.load(); }
     });
+    if (n !== cur || !go.ran) {
+      // Short tape jolt and the PLAY label on every slide change.
+      deck.classList.remove('glitch'); osd.classList.remove('on');
+      void deck.offsetWidth;
+      deck.classList.add('glitch'); osd.classList.add('on');
+    }
+    go.ran = true;
     cur = n;
     count.textContent = (n + 1) + ' / ' + slides.length;
     try { history.replaceState(null, '', '#' + (n + 1)); } catch (e) {}
