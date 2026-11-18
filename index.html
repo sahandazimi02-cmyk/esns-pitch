@@ -41,7 +41,8 @@
 
   /* ---- VHS look: static scanlines + vignette, moving grain and tracking band.
      Only transform/opacity animate, no blend modes or filters over the videos. ---- */
-  #deck p { text-shadow: -2px 0 rgba(235,28,34,.45), 2px 0 rgba(60,200,255,.32); }
+  #deck p { text-shadow: -2px 0 1px rgba(235,28,34,.45), 2px 0 1px rgba(60,200,255,.32); filter: blur(.55px); }
+  #deck video { filter: blur(.8px); }
   #vhs { position: fixed; inset: 0; pointer-events: none; z-index: 5; overflow: hidden; }
   #vhs .scan {
     position: absolute; inset: 0;
@@ -65,7 +66,7 @@
   }
   #vhs .track {
     position: absolute; left: 0; right: 0; top: -18vh; height: 16vh;
-    background: linear-gradient(to bottom, transparent, rgba(255,254,239,.035) 40%, rgba(255,254,239,.07) 50%, rgba(255,254,239,.035) 60%, transparent);
+    background: linear-gradient(to bottom, transparent, rgba(255,254,239,.018) 40%, rgba(255,254,239,.038) 50%, rgba(255,254,239,.018) 60%, transparent);
     animation: vhs-track 11s linear infinite; will-change: transform;
   }
   @keyframes vhs-track { from { transform: translateY(0); } to { transform: translateY(136vh); } }
